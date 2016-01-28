@@ -39,6 +39,13 @@
 \input{definitions}
 \begin{document}
 
+\begin{itemize}
+\item Negative coefficients for compositionality.
+\item Polynomial bounds.
+\item Decoupling from termination.
+\item CFG ready (low-level).
+\end{itemize}
+
 \section{Introduction}
 
 We extend amortized analysis for integer programs to handle
@@ -88,6 +95,11 @@ first loop, we need to \emph{borrow} one resource
 unit first, and then pay it back using the decrement
 statement.  Negative coefficients in potential
 functions achieve precisely this.
+
+Another example where debts are useful.
+\begin{lstlisting}
+while (x > 0) { x -= y+1; [...] x += y; }
+\end{lstlisting}
 
 \section{Canonical Polynomial Potential}
 
