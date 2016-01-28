@@ -39,6 +39,56 @@
 \input{definitions}
 \begin{document}
 
+\section{Introduction}
+
+We extend amortized analysis for integer programs to handle
+arbitrary control flow and produce non-linear bounds.
+Compositionality is improved over previous work by dropping
+the systematic requirement of positivity for coefficients
+of the potential functions.
+
+Negative coefficients introduce a notion of \emph{debt} in
+the formal system. This new accounting system is motivated
+here using two example programs.
+
+\begin{minipage}[b]{.45\linewidth}
+\begin{lstlisting}
+while (x > 0) {
+  tick(1); x -= 1;
+}
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}[b]{.45\linewidth}
+\begin{lstlisting}
+while (x > 0) {
+  x -= 1; tick(1);
+}
+\end{lstlisting}
+\end{minipage}
+
+While the two loops above have the exact same cost,
+the tool \toolname{} reports different bounds: $1 +
+|[0,x]|$ for the first one and $|[0,x]|$ for the
+second.  Both bounds are sound, but only the second
+one is tight.
+
+This imprecision can be explained as follows.  In
+the first case the loop invariant
+needs 1 resource unit to be available
+to execute safely the first \code{tick} statement of
+the loop, then this resource unit is made available
+for the following iteration by the decrement statement.
+However in the second case, the loop invariant does
+not have to have one extra resource unit because
+the decrement statement makes it available right
+before the \code{tick} statement.
+
+In order to have the tight bound $|[0,x]|$ for the
+first loop, we need to \emph{borrow} one resource
+unit first, and then pay it back using the decrement
+statement.  Negative coefficients in potential
+functions achieve precisely this.
+
 \section{Canonical Polynomial Potential}
 
 The following presentation of amortized analysis for resource
