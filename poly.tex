@@ -51,11 +51,10 @@
 We extend amortized analysis for integer programs to handle
 arbitrary control flow and produce non-linear bounds.
 Compositionality is improved over previous work by dropping
-the systematic requirement of positivity for coefficients
+the systematic requirement of non-negativity for coefficients
 of the potential functions.
-
-Negative coefficients introduce a notion of \emph{debt} in
-the formal system. This new accounting system is motivated
+%
+This new accounting system is motivated
 here using two example programs.
 
 \begin{minipage}[b]{.45\linewidth}
@@ -75,31 +74,55 @@ while (x > 0) {
 
 While the two loops above have the exact same cost,
 the tool \toolname{} reports different bounds: $1 +
-|[0,x]|$ for the first one and $|[0,x]|$ for the
+|[0,x]|$ for the first one, and $|[0,x]|$ for the
 second.  Both bounds are sound, but only the second
 one is tight.
+%
+The imprecision is caused by the swap of the two
+statements in the loop body:  In the first case
+we first use one resource unit, then make one
+available using potential of $[0,x]$ in the
+decrement; while in the second case we do the
+contrary, and thus, do not require the extra
+resource unit in the loop invariant.
 
-This imprecision can be explained as follows.  In
-the first case the loop invariant
-needs 1 resource unit to be available
-to execute safely the first \code{tick} statement of
-the loop, then this resource unit is made available
-for the following iteration by the decrement statement.
-However in the second case, the loop invariant does
-not have to have one extra resource unit because
-the decrement statement makes it available right
-before the \code{tick} statement.
+To palliate this lack of robustness and obtain the
+tight bound $|[0,x]|$ for the first loop, we introduce
+the concept of \emph{borrowing}.
+While analyzing the first loop, we propose to borrow
+one resource unit first, and then pay it back using
+the decrement statement.  Negative coefficients in
+potential functions achieve precisely this borrowing.
 
-In order to have the tight bound $|[0,x]|$ for the
-first loop, we need to \emph{borrow} one resource
-unit first, and then pay it back using the decrement
-statement.  Negative coefficients in potential
-functions achieve precisely this.
+Non-negativity of potential functions is critical for
+the soundness of amortized analysis systems.  Previous
+works ensure it by systematically constraining the sign
+of all the
+coefficients of the potential functions.
+In this paper we do not escape from this requirement,
+but we turn the usual syntactical criterion into a
+semantic one. Non-negativity becomes a theorem proved
+using meta-theoretical reasoning.
 
-Another example where debts are useful.
+\Quentin{Another example where debts are useful.}
 \begin{lstlisting}
 while (x > 0) { x -= y+1; [...] x += y; }
 \end{lstlisting}
+
+Previous systems based on amortized analysis get their
+bounds on structured high-level languages.  In this paper
+we show that amortized analysis is equally suited to
+work on unstructured programs.  We use a very general
+\emph{control flow graph} (CFG) representation of programs
+that is similar to usual bytecode formats.  This enables
+analysis at a lower-level where precise cost-semantics
+are easier to define, and allows resource analysis of
+programs for which the source code is not available.
+Low-level resource analysis of programs is also desirable
+in embedded or critical systems where the resource bounds
+(e.g.\ time, stack) need to be valid at the machine
+level, not at the source level.
+
 
 \section{Canonical Polynomial Potential}
 
