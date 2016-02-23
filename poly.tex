@@ -133,7 +133,7 @@ to source-level analysis.
 \end{enumerate}
 
 \paragraph{Polynomial bounds.}
-Using only a minor modification of the analysis used by
+Using only local modifications of the analysis used by
 \toolname{} we are now able to produce polynomial bounds
 while retaining entirely the amortization abilities of
 the original system.  Size changes are still accounted
@@ -146,7 +146,7 @@ while (y > 0) { y--; tick(1); }
 \end{lstlisting}
 %
 Combining both negative coefficients and the new
-polynomial rules, our new system is the only one able
+polynomial rules, our system is the only one able
 to infer the tight bound $|[0,x]|^2 - 0.5 |[0,x]| +
 |[0,y]|$.  To make sure that our new
 system will not regress on intricate
