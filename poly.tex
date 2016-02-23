@@ -48,8 +48,7 @@
 
 \section{Introduction}
 
-We extend amortized analysis for integer programs to handle
-arbitrary control flow and produce non-linear bounds.
+\paragraph{Richer potential functions.}
 Compositionality is improved over previous work by dropping
 the systematic requirement of non-negativity for coefficients
 of the potential functions.
@@ -109,19 +108,52 @@ using meta-theoretical reasoning.
 while (x > 0) { x -= y+1; [...] x += y; }
 \end{lstlisting}
 
+\paragraph{Low-level code support.}
 Previous systems based on amortized analysis get their
 bounds on structured high-level languages.  In this paper
 we show that amortized analysis is equally suited to
 work on unstructured programs.  We use a very general
 \emph{control flow graph} (CFG) representation of programs
-that is similar to usual bytecode formats.  This enables
-analysis at a lower-level where precise cost-semantics
-are easier to define, and allows resource analysis of
-programs for which the source code is not available.
-Low-level resource analysis of programs is also desirable
-in embedded or critical systems where the resource bounds
-(e.g.\ time, stack) need to be valid at the machine
-level, not at the source level.
+that is similar to usual bytecode formats.
+Low-level analysis presents several key advantages compared
+to source-level analysis.
+\begin{enumerate}
+\item Cost semantics for bytecodes and such are easier to
+      define and more precise than source-level cost
+      semantics.
+\item Embedded and critical systems need bounds on the
+      compiled code.  Analyzing the compiled code directly
+      leaves more freedom to the compiler than if it had
+      to preserve resource bounds computed at the source
+      level.
+\item Programs for which the source code is not available
+      can be analyzed.  For example, in the context of
+      security audits to find space or time complexity
+      vulnerabilities.
+\end{enumerate}
+
+\paragraph{Polynomial bounds.}
+Using only a minor modification of the analysis used by
+\toolname{} we are now able to produce polynomial bounds
+while retaining entirely the amortization abilities of
+the original system.  Size changes are still accounted
+naturally, but this time in a polynomial context, as
+demonstrated in the example below.
+%
+\begin{lstlisting}
+while (x > 0) { x--; y += x; }
+while (y > 0) { y--; tick(1); }
+\end{lstlisting}
+%
+Combining both negative coefficients and the new
+polynomial rules, our new system is the only one able
+to infer the tight bound $|[0,x]|^2 - 0.5 |[0,x]| +
+|[0,y]|$.  To make sure that our new
+system will not regress on intricate
+linear examples, in addition to the soudness proof,
+we prove that all derivations made in the linear
+system are valid derivations of the polynomial
+system.
 
 
 \section{Canonical Polynomial Potential}
