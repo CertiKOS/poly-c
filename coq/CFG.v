@@ -60,10 +60,9 @@ Section S.
   Definition sound_final (edges: E → Prop) (ψ: V → (H → Z)) :=
     ∀ v, final edges v → ∀ H, ψ v H ≥ 0.
 
-  (* Well_founded has to have its operands swapped! *)
+  (* Define what a terminating configuration is. *)
   Definition terminates {A: Type} (R: A → A → Prop) x :=
     Acc (λ x y, R y x) x.
-
 
   (* First, the positivity lemma. *)
   Lemma soundness1:
