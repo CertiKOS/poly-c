@@ -61,33 +61,32 @@ Section S.
     ∀ v, final edges v → ∀ H, ψ v H ≥ 0.
 
   (* Well_founded has to have its operands swapped! *)
-  Definition terminates {A: Type} (R: A → A → Prop) :=
-    well_founded (λ x y, R y x).
+  Definition terminates {A: Type} (R: A → A → Prop) x :=
+    Acc (λ x y, R y x) x.
 
 
   (* First, the positivity lemma. *)
   Lemma soundness1:
-    ∀ (edges: E → Prop) (entry: V)     (* CFG program *)
-      (TERM: terminates (steps edges)) (* The program is (super) strongly terminating. *)
-      (ψ: V → (H → Z))                 (* Potential annotations on CFG vertices. *)
-      (SOUNDS: sound_step edges ψ)     (* The annotations are sound. *)
-      (SOUNDF: sound_final edges ψ),  
-    ∀ H₀ v₀, ψ v₀ H₀ ≥ 0.
+    ∀ (v₁: V) (H₁: H) (edges: E → Prop)
+      (ψ: V → (H → Z))
+      (SOUNDS: sound_step edges ψ)
+      (SOUNDF: sound_final edges ψ) 
+      (TERM: terminates (steps edges) (H₁, v₁)),
+      ψ v₁ H₁ ≥ 0.
   Proof.
-    intros.
-    set (conf := (H₀, v₀)).
-    replace v₀ with (snd conf) by reflexivity.
-    replace H₀ with (fst conf) by reflexivity.
-    generalize conf. clear conf H₀ v₀.
-    apply (well_founded_ind TERM).
-    intros [H₀ v₀] IND. simpl.
-    destruct (is_final edges v₀) as [? | NOTFIN].
+    do 6 intro.
+    set (conf := (H₁, v₁)).
+    replace v₁ with (snd conf) by reflexivity.
+    replace H₁ with (fst conf) by reflexivity.
+    generalize conf. clear conf H₁ v₁.
+    induction 1 as [[H₁ v₁] TERM IND]. simpl in *.
+    destruct (is_final edges v₁) as [? | NOTFIN].
     now auto using SOUNDF.
-    destruct NOTFIN as [act [δ [v₁ EDG]]].
-    assert (STEP: steps edges (H₀, v₀) (act H₀, v₁)).
+    destruct NOTFIN as [act [δ [v₂ EDG]]].
+    assert (STEP: steps edges (H₁, v₁) (act H₁, v₂)).
     now econstructor; eauto.
     generalize (IND _ STEP).
-    generalize (SOUNDS _ _ _ _ EDG H₀).
+    generalize (SOUNDS _ _ _ _ EDG H₁).
     simpl. intros.
     assert (δ ≥ 0) by (unfold projZ; apply proj2_sig).
     omega.
@@ -95,23 +94,23 @@ Section S.
 
   (* Second, the actual soundness! *)
   Theorem soundness:
-    ∀ (edges: E → Prop) (entry: V)     (* CFG program *)
-      (TERM: terminates (steps edges)) (* The program is (super) strongly terminating. *)
-      (ψ: V → (H → Z))                 (* Potential annotations on CFG vertices. *)
-      (SOUNDS: sound_step edges ψ)     (* The annotations are sound. *)
-      (SOUNDF: sound_final edges ψ),  
-    ∀ H₀, safe edges (ψ entry H₀) (H₀, entry).
+    ∀ (v₁: V) (H₁: H) (edges: E → Prop)          (* CFG program *)
+      (ψ: V → (H → Z))                           (* Potential annotations on CFG vertices. *)
+      (SOUNDS: sound_step edges ψ)               (* The annotations are sound. *)
+      (SOUNDF: sound_final edges ψ)  
+      (TERM: terminates (steps edges) (H₁, v₁)), (* The program is strongly terminating. *)
+      safe edges (ψ v₁ H₁) (H₁,v₁).
   Proof.
-    intros.
-    set (conf := (H₀, entry)).
-    replace entry with (snd conf) by reflexivity.
-    replace H₀    with (fst conf) by reflexivity.
-    generalize conf. clear conf H₀ entry.
-    apply (well_founded_ind TERM).
-    intros [H₁ v₁] IND. simpl.
+    do 6 intro.
+    set (conf := (H₁, v₁)).
+    replace v₁ with (snd conf) by reflexivity.
+    replace H₁ with (fst conf) by reflexivity.
+    generalize conf. clear conf H₁ v₁.
+    induction 1 as [[H₁ v₁] TERM IND]. simpl in *.
     constructor; intros.
     + generalize (SOUNDS v₁ v₂ act δ EDG H₁).
-      assert (SIGN: ψ v₂ (act H₁) ≥ 0) by eauto using soundness1.
+      assert (SIGN: ψ v₂ (act H₁) ≥ 0)
+        by (eapply soundness1, TERM, steps_intro; eauto).
       omega.
     + apply safewk with (n₂ := ψ v₂ (act H₁)).
       - set (conf := (act H₁, v₂)).
