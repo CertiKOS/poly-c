@@ -29,8 +29,8 @@ Section S.
 
     Inductive safe: Z → (H * V) → Prop :=
       safe_intro: ∀ n H₁ v₁
-                    (FUEL:  ∀ act δ v₂ (EDG: edges (v₁, act, δ, v₂)), n ≥ δ)
-                    (SAFE₂: ∀ act δ v₂ (EDG: edges (v₁, act, δ, v₂)), safe (n-δ) (act H₁, v₂)),
+                    (FUEL: ∀ act δ v₂ (EDG: edges (v₁, act, δ, v₂)), n ≥ δ)
+                    (SAFE: ∀ act δ v₂ (EDG: edges (v₁, act, δ, v₂)), safe (n-δ) (act H₁, v₂)),
                     safe n (H₁, v₁).
     Theorem safewk:
       ∀ n₂ H v (SAFE: safe n₂ (H, v)) n₁ (GE: n₁ ≥ n₂),
@@ -41,7 +41,7 @@ Section S.
       constructor; intros.
       + generalize (FUEL _ _ _ EDG).
         intros; omega.
-      + generalize (SAFE₂ _ _ _ EDG).
+      + generalize (SAFE _ _ _ EDG).
         intros. apply IND with (δ).
         assumption. omega.
     Qed.
