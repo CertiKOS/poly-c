@@ -156,17 +156,17 @@ system are valid derivations of the polynomial
 system.
 
 \paragraph{Decoupling from termination.}
-For resources that are never released (e.g.\ time), we
+We
 propose to separate the resource bound problem from the
 termination problem.  This splitting allows our system
-to assume that the program is terminating, we make use
-of this assumption to relax even more constraints fed
+to assume that the program is terminating, we then make use
+of this assumption to relax even more the constraints fed
 to the LP sover, hence enabling a more precise analysis.
 %
-This is the first work to present this split, and we
-think it is an interesting new way to exploit termination
+This is the first work to include this split, and we
+think it is an interesting new way to leverage termination
 provers that can already handle a much larger class of
-programs than any bounding tool.
+programs than any resource analysis tool.
 
 More precisely, termination allows us to prove that
 potential functions remain non-negative throughout
