@@ -155,6 +155,25 @@ we prove that all derivations made in the linear
 system are valid derivations of the polynomial
 system.
 
+\paragraph{Decoupling from termination.}
+For resources that are never released (e.g.\ time), we
+propose to separate the resource bound problem from the
+termination problem.  This splitting allows our system
+to assume that the program is terminating, we make use
+of this assumption to relax even more constraints fed
+to the LP sover, hence enabling a more precise analysis.
+%
+This is the first work to present this split, and we
+think it is an interesting new way to exploit termination
+provers that can already handle a much larger class of
+programs than any bounding tool.
+
+More precisely, termination allows us to prove that
+potential functions remain non-negative throughout
+the program execution by only constraining the sign of
+final potential functions.  This meta-theorem is
+formalized in Coq.
+
 
 \section{Canonical Polynomial Potential}
 
