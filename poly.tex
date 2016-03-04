@@ -170,6 +170,31 @@ formalized in Coq.
 
 \section{Low-Level Programs}
 
+We represent low-level programs as graphs with
+labelled arrows.  The set of graph vertices
+$\Vrt$ is left abstract.  Edges of the graphs
+are define to be elements of the set
+$\Edg := \Vrt \times \act \times \Qplusz \times \Vrt$.
+The set $\act$ is the set of program actions, it
+can be simply modeled as morphisms on program
+states $\State$.
+
+The semantics of programs are defined using a step relation on
+configurations $\cnf \state v \in \State \times \Vrt$:
+$$
+\cnf{\state_1}{v_1} \smallstep_q \cnf{\state_2}{v_2}
+  \iff
+(v_1, f, q, v_2) \in E  \land  \state_2 = f(\state_1).
+$$
+A complete program is pair $(\cnf{\state_0}{v_0}, E \subseteq \Edg)$
+of an initial configuration and a set of edges.  A program is
+\emph{strongly terminating} if any sequence of steps
+from the initial configuration ends with a \emph{normal configuration}:
+A configuration that cannot transition to any other
+configurations.  We can formalize this notion in Coq
+using the accessibility predicate defined in the
+standard library.
+
 \section{Canonical Polynomial Potential}
 
 The following presentation of amortized analysis for resource
