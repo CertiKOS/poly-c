@@ -4,12 +4,9 @@ Require Import ZArith.
 Require Import Omega.
 
 Notation "a ≥ b" := (Z.ge a b).
+Notation "a < b" := (Z.lt a b).
 Notation "a + b" := (Z.add a b).
 Notation "a - b" := (Z.sub a b).
-
-Definition Zpos := {z | z ≥ 0}.
-Definition projZ (dp: Zpos) := proj1_sig dp.
-Coercion   projZ: Zpos >-> Z.
 
 Section S.
 
@@ -18,7 +15,7 @@ Section S.
 
   (* CFG vertices and edges. *)
   Definition V := nat.
-  Definition E := (V * (H → H) * Zpos * V)%type.
+  Definition E := (V * (H → H) * Z * V)%type.
 
   Section SEMANTICS.
     Hypothesis edges: E → Prop.
@@ -57,6 +54,9 @@ Section S.
   Definition sound_step (edges: E → Prop) (ψ: V → (H → Z)) :=
     ∀ v₁ v₂ act δ (EDGE: edges (v₁, act, δ, v₂)),
      ∀ H, ψ v₁ H - δ ≥ ψ v₂ (act H).
+  Definition sound_free (edges: E → Prop) (ψ: V → (H → Z)) :=
+    ∀ v₁ v₂ act δ (EDGE: edges (v₁, act, δ, v₂)),
+     δ < 0 → ∀ H, ψ v₁ H ≥ 0.
   Definition sound_final (edges: E → Prop) (ψ: V → (H → Z)) :=
     ∀ v, final edges v → ∀ H, ψ v H ≥ 0.
 
@@ -69,11 +69,12 @@ Section S.
     ∀ (v₁: V) (H₁: H) (edges: E → Prop)
       (ψ: V → (H → Z))
       (SOUNDS: sound_step edges ψ)
+      (SOUNDN: sound_free edges ψ)
       (SOUNDF: sound_final edges ψ) 
       (TERM: terminates (steps edges) (H₁, v₁)),
       ψ v₁ H₁ ≥ 0.
   Proof.
-    do 6 intro.
+    do 7 intro.
     set (conf := (H₁, v₁)).
     replace v₁ with (snd conf) by reflexivity.
     replace H₁ with (fst conf) by reflexivity.
@@ -87,8 +88,9 @@ Section S.
     generalize (IND _ STEP).
     generalize (SOUNDS _ _ _ _ EDG H₁).
     simpl. intros.
-    assert (δ ≥ 0) by (unfold projZ; apply proj2_sig).
-    omega.
+    assert (DIS: δ ≥ 0 ∨ δ < 0) by omega.
+    destruct DIS. omega.
+    eauto using SOUNDN.
   Qed.
 
   (* Second, the actual soundness! *)
@@ -96,11 +98,12 @@ Section S.
     ∀ (v₁: V) (H₁: H) (edges: E → Prop)          (* CFG program *)
       (ψ: V → (H → Z))                           (* Potential annotations on CFG vertices. *)
       (SOUNDS: sound_step edges ψ)               (* The annotations are sound. *)
+      (SOUNDN: sound_free edges ψ)
       (SOUNDF: sound_final edges ψ)  
       (TERM: terminates (steps edges) (H₁, v₁)), (* The program is strongly terminating. *)
       safe edges (ψ v₁ H₁) (H₁,v₁).
   Proof.
-    do 6 intro.
+    do 7 intro.
     set (conf := (H₁, v₁)).
     replace v₁ with (snd conf) by reflexivity.
     replace H₁ with (fst conf) by reflexivity.
