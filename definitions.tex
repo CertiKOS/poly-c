@@ -38,7 +38,6 @@
 
 \newcommand{\valid}[6]{\ensuremath{\mathit{valid}(#1,#2,#3,#4,#5,#6)}}
 \newcommand{\validC}[2]{\ensuremath{\mathit{validC}(#1,#2)}}
-\newcommand{\safe}[4]{\ensuremath{\mathit{safe}(#1,#2,#3,#4)}}
 \newcommand{\safeK}[5]{\ensuremath{\mathit{safeK}(#1,#2,#3,#4,#5)}}
 
 \newcommand{\refines}[0]{\ensuremath{\prec}}
@@ -208,7 +207,13 @@
 
 %-------------------------------------------------------
 
+% USED FOR SURE
 \newcommand{\Quentin}[1]{\textcolor{red}{#1}}
+\newcommand{\Vrt}[0]{\ensuremath{\mathcal V}}
+\newcommand{\Edg}[0]{\ensuremath{\mathcal E}}
+\newcommand{\act}[0]{\ensuremath{\mathsf{act}}}
+\newcommand{\cnf}[2]{\ensuremath{#1\,@\,#2}}
+\newcommand{\safe}[3]{\ensuremath{\mathit{safe}_E(\cnf{#1}{#2}, #3)}}
 
 
 %%% Local Variables:

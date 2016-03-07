@@ -182,18 +182,73 @@ states $\State$.
 The semantics of programs are defined using a step relation on
 configurations $\cnf \state v \in \State \times \Vrt$:
 $$
-\cnf{\state_1}{v_1} \smallstep_q \cnf{\state_2}{v_2}
+\cnf{\state_1}{v_1} \smallstep_\delta \cnf{\state_2}{v_2}
   \iff
-(v_1, f, q, v_2) \in E  \land  \state_2 = f(\state_1).
+(v_1, f, \delta, v_2) \in E  \land  \state_2 = f(\state_1).
 $$
 A complete program is pair $(\cnf{\state_0}{v_0}, E \subseteq \Edg)$
 of an initial configuration and a set of edges.  A program is
 \emph{strongly terminating} if any sequence of steps
-from the initial configuration ends with a \emph{normal configuration}:
-A configuration that cannot transition to any other
-configurations.  We can formalize this notion in Coq
+from the initial configuration ends on a \emph{final} vertex
+of the graph:
+A vertex that is at the origin of no edge.
+We can formalize this notion in Coq
 using the accessibility predicate defined in the
 standard library.
+
+\paragraph{Safety.} Using the semantics presented, we can define
+when a program configuration $\cnf{\state}{v}$ of a program runs
+safely using an amount of resources~$Q$.  We denote this property
+as $\safe\state v Q$, and define it inductively as
+$$
+\forall \state_1\, v_1.\, (\cnf\state v \smallstep_\delta \cnf{\state_1}{v_1}) {\implies}
+  Q \ge \delta \land \safe{\state_1}{v_1}{Q-\delta}.
+$$
+Remark that if the vertex $v$ of a configuration $\cnf\state v$ is
+final, safety is vacuously true.
+
+\paragraph{Potential.} A potential annotation annotates
+each vertex $v$ of the low-level program with a potential
+function $\Phi_v$ mapping program states to $\Q$.
+To be \emph{valid}, a potential annotation is required
+to satisfy three conditions.
+%
+\begin{enumerate}
+\item If $v \in \Vrt$ is final, $\forall \state,\, \Phi_v(\state) \ge 0$.
+\item If $(v_1, f, \delta, v_2) \in E$ and $\delta < 0$, then $\forall \state, \Phi_{v_1}(\state) \ge 0$.
+\item If $(v_1, f, \delta, v_2) \in E$, then $\forall \state, \Phi_{v_1}(\state) \ge \Phi_{v_2}(\state) + \delta$.
+\end{enumerate}
+%
+For programs that only allocate resources, the condition~2 does not
+need to be checked.
+
+\begin{theorem}
+  For any strongly-terminating program $(\cnf\state v, E)$ and
+  any valid potential annotation $\Phi$, we have
+  $\Phi_v(\state) \ge 0$.
+\end{theorem}
+\begin{proof}
+In Coq, we use induction over the accessibility of the initial
+configuration.  Then if the vertex $v$ is final, we conclude
+using the condition~1.  If not, depending on the sign of $\delta$
+we either use induction with condition~3, or conclude with condition~2
+directly.
+\end{proof}
+
+\begin{theorem}
+  For any strongly-terminating program $(\cnf\state v, E)$
+  and any valid potential annotation $\Phi$, we have
+  $\safe{\state}{v}{\Phi_v(\state)}$.
+\end{theorem}
+\begin{proof}
+By induction on the accessibility, using Theorem~1  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+to show the part $Q \ge \delta$ of safety.  A weakening
+lemma for safety is also required to get that
+$Q' \ge Q \land \safe{\state}{v}{Q} \implies \safe{\state}{v}{Q'}$.
+It is proved by induction on the definition of
+safety.
+\end{proof}
+
 
 \section{Canonical Polynomial Potential}
 
