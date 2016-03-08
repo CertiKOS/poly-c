@@ -205,7 +205,11 @@ $$
   Q \ge \delta \land \safe{\state_1}{v_1}{Q-\delta}.
 $$
 Remark that if the vertex $v$ of a configuration $\cnf\state v$ is
-final, safety is vacuously true.
+final, safety is vacuously true.  The set of resource amounts
+making an initial configuration safe $\mathcal S$ is the set of
+valid resource bounds for the program.  We can define the
+\emph{resource consumption} of a program as the greatest lower
+bound of the set $\mathcal S$.
 
 \paragraph{Potential.} A potential annotation annotates
 each vertex $v$ of the low-level program with a potential
@@ -219,7 +223,7 @@ to satisfy three conditions.
 \item If $(v_1, f, \delta, v_2) \in E$ and $\delta < 0$,
   then $\forall \state, \Phi_{v_1}(\state) \ge 0$.
 \item If $(v_1, f, \delta, v_2) \in E$,
-  then $\forall \state, \Phi_{v_1}(\state) \ge \Phi_{v_2}(\state) + \delta$.
+  then $\forall \state, \Phi_{v_1}(\state) \ge \Phi_{v_2}(f(\state)) + \delta$.
 \end{enumerate}
 %
 For programs that only allocate resources, the condition~2 does not
@@ -262,7 +266,9 @@ in the low-level program graph contains a vertex $v$ where
 $\forall \state, \Phi_v(\state) \ge 0$.
 With this added requirement, the proof of \pref{thm:snd} can be
 adapted to show that the potential function of the initial
-vertex is a valid resource bound.
+vertex is a valid resource bound.  This extra constraint can
+always be safely used, but it can lead to loser bounds when
+we feed it to the LP~solver.
 
 
 \section{Canonical Polynomial Potential}
