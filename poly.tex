@@ -24,7 +24,7 @@
 \newrefformat{app}{Appendix~\ref{#1}}
 \newrefformat{tab}{Table~\ref{#1}}
 \newrefformat{cha}{Challenge~\ref{#1}}
-\newrefformat{compiler}{Point~\ref{#1} of \pref{thm:compiler}}
+\newrefformat{thm}{Theorem~\ref{#1}}
 
 %----------------------------------------------------
 
@@ -214,15 +214,19 @@ To be \emph{valid}, a potential annotation is required
 to satisfy three conditions.
 %
 \begin{enumerate}
-\item If $v \in \Vrt$ is final, $\forall \state,\, \Phi_v(\state) \ge 0$.
-\item If $(v_1, f, \delta, v_2) \in E$ and $\delta < 0$, then $\forall \state, \Phi_{v_1}(\state) \ge 0$.
-\item If $(v_1, f, \delta, v_2) \in E$, then $\forall \state, \Phi_{v_1}(\state) \ge \Phi_{v_2}(\state) + \delta$.
+\item If $v \in \Vrt$ is final,
+  $\forall \state,\, \Phi_v(\state) \ge 0$.
+\item If $(v_1, f, \delta, v_2) \in E$ and $\delta < 0$,
+  then $\forall \state, \Phi_{v_1}(\state) \ge 0$.
+\item If $(v_1, f, \delta, v_2) \in E$,
+  then $\forall \state, \Phi_{v_1}(\state) \ge \Phi_{v_2}(\state) + \delta$.
 \end{enumerate}
 %
 For programs that only allocate resources, the condition~2 does not
 need to be checked.
 
 \begin{theorem}
+  \label{thm:pos}
   For any strongly-terminating program $(\cnf\state v, E)$ and
   any valid potential annotation $\Phi$, we have
   $\Phi_v(\state) \ge 0$.
@@ -236,18 +240,29 @@ directly.
 \end{proof}
 
 \begin{theorem}
+  \label{thm:snd}
   For any strongly-terminating program $(\cnf\state v, E)$
   and any valid potential annotation $\Phi$, we have
   $\safe{\state}{v}{\Phi_v(\state)}$.
 \end{theorem}
 \begin{proof}
-By induction on the accessibility, using Theorem~1  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+By induction on the accessibility, using \pref{thm:pos}
 to show the part $Q \ge \delta$ of safety.  A weakening
 lemma for safety is also required to get that
 $Q' \ge Q \land \safe{\state}{v}{Q} \implies \safe{\state}{v}{Q'}$.
 It is proved by induction on the definition of
 safety.
 \end{proof}
+
+Resource analysis on non-terminating programs can sometimes
+be of use, for instance, reactive systems are usually non-terminating
+programs.
+For these programs, it is sufficient to require that any cycle
+in the low-level program graph contains a vertex $v$ where
+$\forall \state, \Phi_v(\state) \ge 0$.
+With this added requirement, the proof of \pref{thm:snd} can be
+adapted to show that the potential function of the initial
+vertex is a valid resource bound.
 
 
 \section{Canonical Polynomial Potential}
