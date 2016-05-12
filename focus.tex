@@ -1,0 +1,232 @@
+\documentclass[nocopyrightspace,preprint]{sigplanconf-pldi15}
+
+\usepackage[utf8]{inputenc} %for utf8 input
+\usepackage{amssymb} %for shift symbol
+\usepackage{amsmath}
+\usepackage{listings} %for code
+\usepackage{mathpartir} %for typing rules
+\usepackage{microtype} %better micro typing
+\usepackage{stmaryrd} %for llbracket
+\usepackage{mathabx} % for boxes
+\usepackage{graphicx} %to include png images
+\usepackage{xcolor} %for colors
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{array} %for stupid tables
+
+%----------------------------------------------------
+
+\usepackage{prettyref}
+\newcommand{\pref}[1]{\prettyref{#1}}
+\newcommand{\Pref}[1]{\prettyref{#1} \vpageref[]{#1}}
+\newcommand{\ppref}[1]{\vpageref[]{#1}}
+\newrefformat{fig}{Figure~\ref{#1}}
+\newrefformat{app}{Appendix~\ref{#1}}
+\newrefformat{tab}{Table~\ref{#1}}
+\newrefformat{cha}{Challenge~\ref{#1}}
+\newrefformat{thm}{Theorem~\ref{#1}}
+
+%----------------------------------------------------
+
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+%----------------------------------------------------
+
+\input{definitions}
+\begin{document}
+
+\section{Potential}
+
+To be able to track naturally more program statements
+we change the typical potential from a linear combination
+of (globally non-negative) base potentials to an arbitrary
+polynomial expression of program variables. Monomials are
+defined by $M$ and potential functions are defined by $P$.
+%
+\begin{align*}
+M &:= 1 ~\vert~ x ~\vert~ \max(P_1, P_2) ~\vert~ M_1 \cdot M_2 \\
+P &:= k \cdot M ~\vert~ P_1 + P_2
+\end{align*}
+%
+Where $k \in \mathbb Z$ and $x$ is any program variable.
+The grammar is taken modulo associativity and commutativity
+of the multiplication and addition symbols. (We could also
+consider assiciativity and commutativity of the $\max$ symbol.)
+
+As a consequence of the previous definition we have that
+substituting any variable in a potential function by a
+polynomial of program variables will yield another potential
+function.
+
+\section{Focus Functions}
+
+Focus functions are potentials of special interest.
+To be useful, they must be expressions that are non-negative
+at some critical program points.  Here are some examples
+of focus functions:
+%
+\begin{align*}
+m_{xy}^1 &:= \max(x,y) - x \\
+m_{xy}^2 &:= \max(x,y) - y \\
+m_{xyz}^1 &:= \max(x, y) + z - \max(x,y+z) \\
+i_{xy} &:= \max(0, y - x) \\
+b(3, m_{xyz}^{1}) &:= \binom{\max(x,y) + z}{3} - \binom{\max(x, y+z)}{3}.
+\end{align*}
+%
+Both $m_{xy}^1$ and $m_{xy}^2$ are unconditionally non-negative.
+But $m_{xyz}^2$ can sometimes be negative, a sufficient condition
+for it to be non-negative is $z \ge 0$.
+
+Focus functions are used to enforce constraints between
+general potential functions.  In a program state $\sigma$,
+we can constrain $P \ge P'$ using the following rule:
+
+$$
+\Rule{Const}
+{
+  \forall i, \sigma \models F_i(\sigma) \ge 0 \\
+  \forall i, k_i \ge k'_i \\\\
+  P = L + \sum_i k_i \cdot F_i \\
+  P' = L + \sum_i k'_i \cdot F_i
+}
+{P(\sigma) \ge P'(\sigma)}
+$$
+
+To prove non-negativity of focus functions at a given program
+point we proceed in two steps. First, we compute an invariant
+respected by this point using abstract interpretation.  Second,
+we reduce the complexity of the focus function using sufficient
+conditions (in the example above $b(3, m_{xyz}^1) \ge 0 \impliedby
+m_{xyz}^1 \ge 0 \impliedby z \ge 0$), and then resolve the base
+case using the abstract state computed in the first step.  Note
+that to make the second step of this method work it is critical
+to have focus functions given in a \emph{structured language},
+unlike general potential.
+
+\section{Automation}
+
+\paragraph{Clarification for Jan.} The automation will produce
+judgements of the form $\htriple{P}{c}{P'}$ where $P$ and $P'$
+are given by the grammar in the first section.  The coefficients
+of \emph{toplevel} monomials in $P$ and $P'$ will be LP variables.
+In the {\sc Const} rule of the second section $k_i$, $k'_i$ and
+the coefficients of $L$ will also be LP variables.
+
+\paragraph{Challenges.}
+Several challenges are raised by the automation:
+
+\begin{itemize}
+\item Have potential in ``canonical'' form.  If we do not do
+  so we might miss trivial facts, like $xy = yx$, and split
+  the potential of equal things.
+\item Focus functions must be tied to a syntactical scope.
+  Since my scopes are currently per-function, it means that focus
+  functions must be given per-function.
+\item What initial set of monomials do we consider?  I thought
+  this could be simply collecting the monomials resulting from the
+  development of the current focus functions.
+\item As Jan noted, potential functions form a ``language'' that
+  might have some consistency requirements to make the automation
+  work correctly.  I am not too concerned about this, since focus
+  functions encode very local knowledge.
+\end{itemize}
+
+My opinion is that most of the issues tied to automation (unless
+the scope one) should not affect the theoretical presentation.
+
+\section{Examples}
+
+\paragraph{Linear example.}  The example program below does not
+work with the automation presented at PLDI'15, because one ad-hoc
+rule for potential transfer between $|[a,b]|$ and $|[c,d]|$ when
+$b-a \ge d-c$ is not present in the {\sc Relax} rule.
+
+\begin{lstlisting}[mathescape]
+x = 0;
+z = 0;
+${\color{blue}\{ \max(0, N-x) + z \}}$
+while x < N do
+  ${\color{blue}\{ \max(0, N-x) + z \}}$
+  x = x + 1;
+  ${\color{blue}P_1 := \{ \max(0, N-x+1) +z \}}$
+  ${\color{blue}P_2 := \{ \max(0, N-x) + 1 + z \}}$
+  if x < n then
+    ${\color{blue}P_3 := \{ \max(0,N-x) + 1 + z \}}$
+    ${\color{blue}P_4 := \{ \max(0,N-n) + 1 + z \}}$
+    x = n;
+    ${\color{blue}\{ \max(0,N-x) + 1 + z \}}$
+  end
+  z = z + 1;
+  ${\color{blue}\{ \max(0, N-x) + z \}}$
+end
+${\color{blue}\{ z \}}$
+\end{lstlisting}
+%
+On the previous example we use the following three focus
+functions.  They are both instances of more general patterns
+that could be added automatically by a heuristic looking at
+loop conditions and operations on variables.
+\begin{itemize}
+\item $F_1 := \max(0, N-x+1) - (N-x+1)$
+\item $F_2 := (N-x) - \max(0, N-x)$
+\item $F_3 := \max(0, N-n + (n-x)) - \max(0,N-n)$
+\end{itemize}
+
+They can be used to prove that $P_1 \ge P_2$ and $P_3 \ge P_4$.
+To prove the first identity we first use abstract interpretation
+to remark that $F_1$ and $F_2$ are non-negative, then we
+rewrite $P_1$ and $P_2$ as
+\begin{align*}
+P_1 &:= 1 \cdot F_1 + 1 \cdot F_2 + \max(0, N-x) + 1 + z \\
+P_2 &:= 0 \cdot F_1 + 0 \cdot F_2 + \max(0, N-x) + 1 + z.
+\end{align*}
+Note that the coefficients in front of the two focus functions
+decreased and the rest remained the same.  This is a valid
+application of the {\sc Const} rule.
+The second identity is proved by observing that $F_3$ is
+non-negative and using the following rewrites
+\begin{align*}
+P_3 &:= 1 \cdot F_3 + \max(0, N-n) + 1 + z \\
+P_4 &:= 0 \cdot F_3 + \max(0, N-n) + 1 + z.
+\end{align*}
+
+Thanks to our general potential functions, the rule used to
+handle assignments in the program is very simple, I give it below.
+Note how it applies at all assignments in the example program.
+$$
+\Rule{Assign}
+{ }
+{\htriple{P'[x \gets E]}{\lstinline{x = E;}}{P'}}
+$$
+
+\paragraph{Polynomial example.} Using the binomial basis in
+focus functions, we can give tight bounds on polynomial
+examples.
+
+\begin{lstlisting}[mathescape]
+assume x >= 0;
+${\color{blue}\{ \frac{x^2-x}{2} \}}$
+z = 0;
+${\color{blue}\{ \frac{x^2-x}{2} + z \}}$
+while x > 0 do
+  ${\color{blue}\{ \frac{x^2-x}{2} + z \}}$
+  x = x - 1;
+  ${\color{blue}\{ \frac{x^2-x}{2} + x + z \}}$
+  z = z + x;
+  ${\color{blue}\{ \frac{x^2-x}{2} + z \}}$
+end
+${\color{blue}\{ P_1 := \frac{x^2+x}{2} + z \}}$
+${\color{blue}\{ P_2 := z \}}$
+\end{lstlisting}
+
+The only application of the {\sc Const} rule is at the very
+end of the program to prove that $P_1 \ge P_2$.  To make it
+work, we use the focus function $\binom{x}{2}$ and prove that
+it is non-negative using the fact that $x \ge 0$ at that point.
+
+
+\end{document}
