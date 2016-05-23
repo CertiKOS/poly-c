@@ -228,5 +228,47 @@ end of the program to prove that $P_1 \ge P_2$.  To make it
 work, we use the focus function $\binom{x}{2}$ and prove that
 it is non-negative using the fact that $x \ge 0$ at that point.
 
+\section{Relation to Abstract Interpretation}
+
+Amortized analysis as we use it has several key differences
+with abstract interpretation.  Note first that precise amortized
+analysis is only possible using information inferred with abstract
+interpretation (e.g.\ to check the sign of focus funtions).
+However, two main differences make the two kinds of analysis
+orthogonal:
+
+\begin{enumerate}
+
+\item Amortized analysis is \emph{non-local}. The properties
+we obtain with AA relate variables at different program points,
+while AI gives relations between the value of variables at the
+same program point.  It is possible to emulate AA using AI by
+duplicating all variables at one program point, however, even
+for weakly relational abstract domains, there is at least a
+quadratic blowup in the number of tracked objects.  (This is
+not the case with AA.)
+
+\item Amortized analysis has powerful \emph{inferrence
+capabilities}.  The natural use-case for AI is checking, for
+example, we check that array accesses are in-bounds, we check
+that integer operations do not overflow.  On the contrary,
+the natural use-case of AA is inferrence, we infer upper or
+lower-bounds on expressions.  Since automated AA uses LP
+solving that has optimization capabilities, we can also make
+sure that the the result of the AA inference is optimal in
+some sense (e.g.\ least upper bound, greatest lower bound).
+
+\end{enumerate}
+
+This does not mean that the two anlaysis are incompatible.
+First, as noted above, AA needs AI to get anything done.  We could
+also envision to use AA to improve AI results and create a
+virtuous cycle!  In particular, functions are a common abstraction
+of programming languages that are naturally handled by AA (we
+can relate the result with the arguments) but do not work great
+with AI.  Feeding back information retreived with AA into an AI
+analysis will improve the overall results (there is already a
+framework for doing that in the AI library used by my tool).
+
 
 \end{document}
