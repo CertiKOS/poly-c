@@ -39,6 +39,85 @@
 \input{definitions}
 \begin{document}
 
+\section{Low Level Integer Programs}
+
+\paragraph{Syntax.}
+Programs are represented as control flow graphs, the program
+counter moves from node to node and the program state is updated
+according to the edges taken during the execution.
+
+We assume two arbitrary sets: one set of program points $S$
+and another of function identifiers $F$.
+A program function is a tuple $(E, L, A, R, e, x)$ with
+$E \subseteq S \times \mathsf{Act} \times S$ a set of labelled
+edges, $L$ a set of local variables, $A, R$
+two lists of argument and return local variables, and $e, x \in S$ the
+function entry and exit points.
+
+\begin{align*}
+a \in \mathsf{Act} :=~&(v_1, \dots, v_n) \gets (e_1, \dots, e_n) ~|~\\
+                      &(v_1, \dots, v_n) \gets f(v'_1, \dots, v'_m) ~|~\\
+                      &\code{guard}~e\ge 0 ~|~ \code{weaken}
+\end{align*}
+Actions can be parallel assignments, function calls,
+guards, or explicit weakenings.  The assertions are used
+together with non-determinism to encode conditionals.  The
+non-determinism is encoded by having multiple edges leaving
+from a single program point.
+
+A complete program is pair $(\Delta, f_m)$ of $\Delta$ a map from
+function identifiers $f \in F$ to functions and a distiguished
+``main'' function~$f_m$.
+
+\paragraph{Semantics.}
+Program states are tuples $(f, \state, s)$ containing the function
+being executed, the memory state, i.e. a map from the local variables
+of $f$ to natural numbers, and a program counter $s \in S$.  The
+complete operational semantics are presented in~\pref{fig:sem}.
+
+\begin{figure}[ht]
+\begin{mathpar}
+\Rule{S:Assign}
+{
+  \Delta(f) = (E, L, A, R, e, x) \\
+  (s, (v_1, \dots, v_n) \gets (e_1, \dots, e_n), s') \in E \\
+  \state' = \state[\sem{e_1}_\state, \dots, \sem{e_2}_\state \backslash v_1, \dots, v_n]
+}
+{ (f, \state, s) \smallstep (f, \state', s') }
+\and
+\Rule{S:Call}
+{
+  \Delta(f) = (E, L, A, R, e, x) \\
+  \Delta(f') = (E', L', A', R', e', x') \\
+  (s, (v_1, \dots, v_n) \gets f'(v'_1, \dots, v'_m), s') \in E \\
+  |R'| = n \and
+  |A'| = m \\
+  \forall 1 \le i \le m.\, \state'(a'_i) = \state(v'_i) \\
+  (f', \state', e') \smallstep^* (f', \state'', x')
+}
+{ (f, \state, s) \smallstep
+  (f, \state[\state''(r'_1), \dots, \state''(r'_n) \backslash v_1, \dots, v_n], s')
+}
+\and
+\Rule{S:Guard}
+{
+  \Delta(f) = (E, L, A, R, e, x) \\
+  (s, \code{guard}~e \ge 0, s') \in E \\
+  \sem e_\state \ge 0
+}
+{ (f, \state, s) \smallstep (f, \state, s') }
+\and
+\Rule{S:Weaken}
+{
+  \Delta(f) = (E, L, A, R, e, x) \\
+  (s, \code{weaken}, s') \in E
+}
+{ (f, \state, s) \smallstep (f, \state, s') }
+\end{mathpar}
+\caption{Semantics of a graph program with function map~$\Delta$.}
+\label{fig:sem}
+\end{figure}
+
 \section{Potential}
 
 To be able to track naturally more program statements
@@ -48,19 +127,55 @@ polynomial expression of program variables. Monomials are
 defined by $M$ and potential functions are defined by $P$.
 %
 \begin{align*}
-M &:= 1 ~\vert~ x ~\vert~ \max(P_1, P_2) ~\vert~ M_1 \cdot M_2 \\
+M &:= 1 ~\vert~ v ~\vert~ \max(P_1, P_2) ~\vert~ M_1 \cdot M_2 \\
 P &:= k \cdot M ~\vert~ P_1 + P_2
 \end{align*}
 %
-Where $k \in \mathbb Z$ and $x$ is any program variable.
+Where $k \in \mathbb Q$ and $v$ is any program variable.
 The grammar is taken modulo associativity and commutativity
 of the multiplication and addition symbols. (We could also
 consider assiciativity and commutativity of the $\max$ symbol.)
 
-As a consequence of the previous definition we have that
-substituting any variable in a potential function by a
-polynomial of program variables will yield another potential
-function.
+An important consequence of the previous definition is that
+potential functions are stable under substitution of program
+expressions.  This allows precise tracking of potential for
+straight-line program sections.
+
+\section{Annotations}
+
+Annotations associate to each program point in each function a
+potential function. When annotations respect a certain soundness
+criterion, the can be used to derive cross programs invariants.
+We detail here the soundness conditions for annotations.
+
+An annotation $\Gamma$ is formally defined as a map from $F \times S$ to
+potential functions.  The annotation $\Gamma$ for the program $(\Delta, f_m)$
+is sound when:
+For all $(f, s) \in F \times S$, if $\Delta(f) = (E, L, A, R, e, x)$ and
+$(s, a, s') \in E$ then
+
+\begin{enumerate}
+\item
+if $a$ is $(v_1, \dots, v_n) \gets (e_1, \dots, e_n)$, \\
+$\Gamma(f, s) = \Gamma(f, s')[e_1, \dots, e_n \backslash v_1, \dots, v_n]$;
+\item
+if $a$ is $(v_1, \dots, v_n) \gets f'(v'_1, \dots, v'_m)$, \\
+TODO
+\item
+if $a$ is \code{weaken}, for all $\state$ reachable at $(f, s)$, \\
+$\Gamma(f, s)(\state) \ge \Gamma(f, s')(\state)$;
+\item
+otherwise $\Gamma(f, s) = \Gamma(f, s')$.
+\end{enumerate}
+
+We say that the state $\state$ is reachable at $(f, s)$
+when there is a state $\state'$ such that $(f_m, \state', e_m)
+\smallstep^* (f, \state, s)$ where $e_m$ is the entry point of $f_m$.
+This reachability condition ensures that
+the inequality is required only for states that can actually appear
+in a regular program execution.
+Note that the first condition will always be applicable since potential
+functions are stable under substitution of program expressions.
 
 \section{Focus Functions}
 
